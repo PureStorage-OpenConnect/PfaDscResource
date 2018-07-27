@@ -6,8 +6,8 @@ Configuration Test-PfaPodVolume
     Import-DSCResource -Module PfaDscResource
     PfaPodVolume pv
     {
-        Pod         = "dsc-test-pod"
-        Volume      = "dsc-test-vol"
+        Pod         = "<insert pod name here>"
+        Volume      = "<insert volume name here>"
         PfaEndpoint = "<insert pfa endpoint value here>"
         PfaApiToken = "<insert token value here>"
         Ensure      = "Present"
