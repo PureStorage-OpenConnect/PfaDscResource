@@ -3,7 +3,7 @@ PowerShell module that implements a DSC resource to ensure a volume is present/a
 
 ## Installation Instructions
 
-1. Copy the .psm1 and .psd1 files to C:\Program Files\WindowsPoweerShell\Modules\PfaDscResource 
+1. Copy the .psm1 and .psd1 files to C:\Program Files\WindowsPoweerShell\Modules\PfaDscResource.
 
 2. The Test-PodVolumeResource.ps1 script serves as a means of testing the resource, to use this supply the
    name of an existing volume, the name of a non-stetched active cluster pod, an array end point and api token string
