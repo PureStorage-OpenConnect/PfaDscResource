@@ -130,7 +130,7 @@ class PfaPodVolume
     {
         $present = $true
 
-	    $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
+	$PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
         $fqvn     = $this.Pod + "::" + $this.Volume;
 
         if ((Get-PfaNamedVolumes -Array $PfaArray '*' | Select-String $fqvn).Count -eq 1) {
