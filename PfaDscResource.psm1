@@ -5,9 +5,252 @@ enum Ensure
 }
 
 <#
-   This resource manages the file in a specific path.
-   [DscResource()] indicates the class is a DSC resource
+   Resource to create/remove a volume on the FlashArray specified by the EndPoint property.
 #>
+
+[DscResource()]
+class PfaVolume
+{
+    <#
+        Specifies the volume to be created / destroyed.
+    #>
+    [DscProperty(Key)]
+    [string]$Volume
+    <#
+       This property specifies the size of the volume, the unit is represented by the unit property.
+
+    #>
+    [DscProperty(Mandatory)]
+    [long]$Size
+    <#
+       A single letter representing the unit associated with the size of the volume:
+
+       - K
+       - G (GiB)
+       - T (TiB)
+
+    #>
+    [DscProperty(Mandatory)]
+    [char]$Unit
+    <#
+        Defines whether the resource (volume) should be present/absent.
+    #>
+    [DscProperty(Mandatory)]
+    [Ensure] $Ensure
+
+    <#
+       This property defines the the endpoint of the FlashArray to create
+       the volume on / remove the volume from.
+    #>
+    [DscProperty(Mandatory)]
+    [string] $PfaEndpoint
+
+    <#
+       This property specifies API token to be used when connecting to
+       the FlashArray.
+
+    #>
+    [DscProperty(Mandatory)]
+    [string] $PfaApiToken
+
+    <#
+        Method to set the resource (volume) to the desired state.
+    #>
+    [void] Set()
+    {
+        Write-Host "Checking if volume exists"
+        $volumeExists = $this.TestVolume()
+
+        $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
+
+        if ($this.ensure -eq [Ensure]::Present)
+        {
+            if (-not $volumeExists)
+            {
+	            New-PfaVolume -Array $PfaArray -VolumeName $this.Volume -Size $this.Size -Unit $this.Unit 
+            }            
+        }
+        else
+        {
+            if ($volumeExists)
+            {
+                Write-Verbose -Message "Removing volume $this.Volume"
+                Remove-PfaVolumeOrSnapshot -Array $PfaArray -Name $this.Volume
+            }
+        }
+    }
+
+    <#
+        Method to obtain the state the resource (volume) is in.
+    #>
+    [bool] Test()
+    {
+        $present = $this.TestVolume()
+
+        if ($this.Ensure -eq [Ensure]::Present)
+        {
+            return $present
+        }
+        else
+        {
+            return -not $present
+        }
+    }
+
+    <#
+        This method returns an instance of this class with the updated key
+        properties.
+    #>
+    [PfaVolume] Get()
+    {
+        $present = $this.TestVolume()
+
+        if ($present)
+        {
+            $this.Ensure = [Ensure]::Present
+        }
+        else
+        {
+            $this.Ensure = [Ensure]::Absent
+        }
+
+        return $this
+    }
+
+    <#
+        Helper method to check if the resource (volume) is already present or absent.
+    #>
+    [bool] TestVolume()
+    {
+        $present = $true
+
+	    $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
+
+        if ((Get-PfaNamedVolumes -Array $PfaArray '*' | Select-String $this.Volume).Count -eq 1) {
+            $present = $true
+        }
+        else {
+            $present = $false
+        }
+
+        return $present
+    }
+} 
+
+[DscResource()]
+class PfaProtectionGroup
+{
+    <#
+        Specifies the name of the protection group to be created / removed.
+    #>
+    [DscProperty(Key)]
+    [string]$ProtectionGroup
+  
+    <#
+        Defines whether the resource (protection group) should be present/absent.
+    #>
+    [DscProperty(Mandatory)]
+    [Ensure] $Ensure
+
+    <#
+       This property defines the the endpoint of the FlashArray to create the
+       protection group on / remove the protection group from.
+    #>
+    [DscProperty(Mandatory)]
+    [string] $PfaEndpoint
+
+    <#
+       This property specifies API token to be used when connecting to
+       the FlashArray.
+
+    #>
+    [DscProperty(Mandatory)]
+    [string] $PfaApiToken
+
+    <#
+        Method to set the resource (protection group) to the desired state.
+    #>
+    [void] Set()
+    {
+        Write-Host "Checking if protection group exists"
+        $protectionGroupExists = $this.TestProtectionGroup()
+
+        $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
+
+        if ($this.ensure -eq [Ensure]::Present)
+        {
+            if (-not $protectionGroupExists)
+            {
+                New-PfaProtectionGroup -Array $PfaArray -Name $this.ProtectionGroup
+            }            
+        }
+        else
+        {
+            if ($protectionGroupExists)
+            {
+                Write-Verbose -Message "Removing protection group $this.ProtectionGroup"
+                Remove-PfaProtectionGroupOrSnapshot -Array $PfaArray -Name $this.ProtectionGroup
+            }
+        }
+    }
+
+    <#
+        It should return True or False, showing whether the resource
+        is in a desired state.
+    #>
+    [bool] Test()
+    {
+        $present = $this.TestProtectionGroup()
+
+        if ($this.Ensure -eq [Ensure]::Present)
+        {
+            return $present
+        }
+        else
+        {
+            return -not $present
+        }
+    }
+
+    <#
+        This method returns an instance of this class with the updated key
+        properties.
+    #>
+    [PfaProtectionGroup] Get()
+    {
+        $present = $this.TestProtectionGroup()
+
+        if ($present)
+        {
+            $this.Ensure = [Ensure]::Present
+        }
+        else
+        {
+            $this.Ensure = [Ensure]::Absent
+        }
+
+        return $this
+    }
+
+    <#
+        Helper method to check if the resource (protection group) is present / absent.
+    #>
+    [bool] TestProtectionGroup()
+    {
+        $present = $true
+
+	    $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
+
+        if ((Get-PfaProtectionGroups -Array $PfaArray | Select-Object name | Select-String $this.ProtectionGroup).Count -eq 1) {
+            $present = $true
+        }
+        else {
+            $present = $false
+        }
+
+        return $present
+    }
+} 
 
 [DscResource()]
 class PfaPodVolume
@@ -23,17 +266,7 @@ class PfaPodVolume
     [DscProperty(Key)]
     [string]$Volume
     <#
-        This property indicates if the settings should be present or absent
-        on the system. For present, the resource ensures the file pointed
-        to by $Path exists. For absent, it ensures the file point to by
-        $Path does not exist.
-
-        The [DscProperty(Mandatory)] attribute indicates the property is
-        required and DSC will guarantee it is set.
-
-        If Mandatory is not specified or if it is defined as
-        Mandatory=$false, the value is not guaranteed to be set when DSC
-        calls the resource.  This is appropriate for optional properties.
+        Specifies whether the resource (pod volume) should be present or absent.
     #>
     [DscProperty(Mandatory)]
     [Ensure] $Ensure
@@ -54,12 +287,11 @@ class PfaPodVolume
     [string] $PfaApiToken
 
     <#
-        This method is equivalent of the Set-TargetResource script function.
-        It sets the resource to the desired state.
+        Method to set the resource (pod volume) to the desired state.
     #>
     [void] Set()
     {
-        Write-Host "Checking if volume exists"
+        Write-Host "Checking if volume exists in the pod"
         $volumeExistsInPod = $this.TestPodVolume()
 
         $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
@@ -83,8 +315,7 @@ class PfaPodVolume
     }
 
     <#
-        This method is equivalent of the Test-TargetResource script function.
-        It should return True or False, showing whether the resource
+        Method to return True or False, showing whether the resource
         is in a desired state.
     #>
     [bool] Test()
@@ -102,10 +333,8 @@ class PfaPodVolume
     }
 
     <#
-        This method is equivalent of the Get-TargetResource script function.
-        The implementation should use the keys to find appropriate resources.
         This method returns an instance of this class with the updated key
-         properties.
+        properties.
     #>
     [PfaPodVolume] Get()
     {
@@ -130,7 +359,7 @@ class PfaPodVolume
     {
         $present = $true
 
-	$PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
+	    $PfaArray = New-PfaArray -EndPoint $this.PfaEndpoint -ApiToken $this.PfaApiToken -IgnoreCertificateError
         $fqvn     = $this.Pod + "::" + $this.Volume;
 
         if ((Get-PfaNamedVolumes -Array $PfaArray '*' | Select-String $fqvn).Count -eq 1) {
