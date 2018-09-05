@@ -12,9 +12,9 @@
 RootModule = 'PfaDscResource.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0.0'
+ModuleVersion = '1.0.0.2'
 
-DscResourcesToExport = 'PfaPodVolume'
+DscResourcesToExport = @('PfaVolume', 'PfaProtectionGroup', 'PfaPodVolume')
 
 # ID used to uniquely identify this module
 GUID = 'ff2bc07b-3dbd-4a5f-96e9-f6f79375bafb'
